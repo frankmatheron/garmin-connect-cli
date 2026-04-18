@@ -1,5 +1,7 @@
 # garmin-connect-cli
 
+[![CI](https://github.com/frankmatheron/garmin-connect-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/frankmatheron/garmin-connect-cli/actions/workflows/ci.yml)
+
 CLI for managing Garmin Connect workouts, calendar, and activities.
 
 > **Unofficial.** This project is not affiliated with Garmin. It uses the
