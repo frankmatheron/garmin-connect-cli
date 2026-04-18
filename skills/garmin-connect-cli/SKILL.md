@@ -11,11 +11,37 @@ and uploading structured workout JSON files.
 
 ## Prerequisites
 
-- CLI installed: `pip install git+https://github.com/frankmatheron/garmin-connect-cli`
-- Logged in once: `garmin login` (interactive prompt). Tokens are cached
-  at `$XDG_DATA_HOME/garmin-connect-cli/tokens/` (default
-  `~/.local/share/garmin-connect-cli/tokens/`).
-- Built on the `garminconnect` Python library.
+Before running any `garmin` command, check the CLI is installed:
+
+```bash
+command -v garmin
+```
+
+If it's not, install with `pipx` (preferred — isolated venv, global binary):
+
+```bash
+pipx install git+https://github.com/frankmatheron/garmin-connect-cli
+```
+
+Or with `pip` into the active environment:
+
+```bash
+pip install git+https://github.com/frankmatheron/garmin-connect-cli
+```
+
+Then the user needs to log in once:
+
+```bash
+garmin login
+```
+
+This prompts for username and password interactively and caches session
+tokens at `$XDG_DATA_HOME/garmin-connect-cli/tokens/` (default
+`~/.local/share/garmin-connect-cli/tokens/`). If any `garmin` command
+later fails with `"ERROR: Not logged in"`, prompt the user to re-run
+`garmin login` — tokens may have expired.
+
+Built on the `garminconnect` Python library.
 
 ## Command reference
 
