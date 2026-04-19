@@ -9,6 +9,64 @@ CLI for managing Garmin Connect workouts, calendar, and activities.
 > library, which wraps an undocumented Garmin Connect API. Expect occasional
 > breakage when Garmin changes things on their end.
 
+## How I use this
+
+I built this CLI to be driven by an agent, not by me. The whole point is to
+give Claude a small, predictable surface it can use to read, create, and
+schedule Garmin Connect workouts on my behalf — so the interesting work
+(designing the training, reviewing how it went) stays in conversation, and
+the mechanical work (uploading JSON, scheduling dates, pulling activity
+stats) becomes a tool call.
+
+The setup I actually use:
+
+1. **A separate `workout-planning/` repo holds the plan.** It has a
+   `PLAN.md` describing a phased marathon progression (5K → 10K → 15K → 21K
+   → 42K) based on [Runnersworld.nl](https://www.runnersworld.nl/) schedules,
+   plus the source PDFs. That's Claude's long-term context for my training.
+2. **Claude generates the workout JSON.** In a session, I'll say something
+   like "generate next week's workouts" and Claude writes one JSON file per
+   training — warmup, intervals, recovery, cooldown, HR-zone targets, repeat
+   groups. It gets the format right because this repo ships a Claude skill
+   at `skills/garmin-connect-cli/` with the full JSON reference and command
+   catalogue. The skill is the contract between the agent and the CLI.
+3. **Claude calls this CLI to sync to Garmin.** Still in the same session,
+   Claude runs:
+
+   ```bash
+   garmin workouts create garmin_json/10k_w3_fri_05jun.json
+   garmin calendar add <workout-id> 2026-06-05
+   ```
+
+   …and the session lands on the watch. I don't type those commands; Claude
+   does. My job is to say "upload and schedule this week" and approve the
+   tool calls.
+4. **After the run, Claude pulls the activity back for analysis.** I'll ask
+   "how did yesterday's intervals go?" and Claude uses the same CLI to fetch
+   the data:
+
+   ```bash
+   garmin activities list 2026-06-05 2026-06-05 --type running
+   garmin activities splits <activity-id>
+   garmin activities hr <activity-id>
+   garmin activities details <activity-id>
+   ```
+
+   From there we discuss what's actually interesting: time in each HR zone,
+   cadence and stride length, how the splits drifted, whether easy runs
+   stayed easy. Over weeks and months this turns into a real progression
+   conversation — not just a dashboard I glance at.
+
+That's why the CLI looks the way it does: deterministic output, JSON in /
+JSON out, flags that mirror the Garmin Connect data model, no interactive
+prompts once authenticated. It's designed to be boring and scriptable so an
+agent can use it reliably for both sides of the loop — prescribing the
+training and reflecting on the result.
+
+If you want to set up something similar, start with
+`skills/garmin-connect-cli/SKILL.md` — any agent that loads that skill can
+produce valid workouts and drive this CLI without extra hand-holding.
+
 ## Install
 
 Requires Python 3.12+.
