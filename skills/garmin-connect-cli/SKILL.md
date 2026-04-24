@@ -85,6 +85,43 @@ garmin activities rename <id> "<new name>"
 garmin activities retype <id> --type-key <type> [--type-id <id>] [--parent-type-id <id>]
 ```
 
+### Zones
+
+Read and write HR zone configuration on the Garmin Connect server.
+Zones are stored per sport — a `DEFAULT` set plus optional sport
+overrides like `RUNNING`. Structured workouts that target
+`heart.rate.zone` (via `zoneNumber: N`) resolve symbolically against
+the sport-specific set if one exists, else against `DEFAULT`. A
+desynced `RUNNING` override silently makes workout HR targets drift
+away from the values shown under profile zones in the web UI — this
+is the usual cause of "I updated my zones but the workout still shows
+the old numbers."
+
+```bash
+garmin zones list                                 # current zones per sport
+garmin -p zones list                              # pretty table
+garmin zones set --max-hr 190 --rhr 47            # updates DEFAULT + RUNNING (Karvonen)
+garmin zones set --max-hr 190 --rhr 47 --sport RUNNING
+garmin zones set --max-hr 190 --rhr 47 --method PERCENT_MAX_HR
+garmin zones set --max-hr 190 --rhr 47 --zones 118,133,147,161,176
+```
+
+`set` auto-computes Z1–Z5 floors at the standard 50/60/70/80/90
+percentages for the chosen method (`HR_RESERVE` for Karvonen / %HRR,
+default; `PERCENT_MAX_HR` for %Max). Use `--zones` to override floors
+explicitly.
+
+Effects:
+- Applies to newly-recorded activities and to structured workouts
+  resolved from the server from now on (workout JSON uses
+  `zoneNumber: N` symbolically, not absolute bpm).
+- Past activities keep the zone distribution frozen at the config
+  that was active when they were recorded; re-upload the FIT file if
+  you need them re-classified.
+- The watch keeps its own local copy of zones — force a sync (pull-
+  down menu on watch) after changing zones on the server so the
+  watch's real-time display and in-workout HR targets match.
+
 ## Workout JSON format
 
 Workouts are uploaded as JSON matching Garmin's native structure. When
@@ -394,3 +431,11 @@ garmin workouts create new-version.json
   Wait ~2 minutes between retries.
 - **MFA:** not supported in v1. If the user has MFA enabled, login will
   fail.
+- **Zones per sport:** editing HR zones in the Garmin Connect web UI
+  often updates only one of the per-sport sets (e.g. `DEFAULT` stays at
+  old values while `RUNNING` gets changed, or vice versa). Structured
+  workouts read from the sport-specific set, so a mismatch silently
+  makes workout HR targets disagree with the profile zones shown in the
+  UI. When the user reports "my zones look right but the workout
+  shows wrong numbers," run `garmin -p zones list` first — that reveals
+  the desync in one command. Use `garmin zones set` to align both sets.
