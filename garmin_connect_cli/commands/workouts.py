@@ -50,5 +50,15 @@ def run(api, args) -> int:
         _output({"deleted": args.id}, args.pretty)
         return 0
 
+    if cmd == "download":
+        data = api.download_workout(args.id)
+        out_path = Path(args.out) if args.out else Path(f"workout_{args.id}.fit")
+        if isinstance(data, (bytes, bytearray)):
+            out_path.write_bytes(data)
+        else:
+            out_path.write_text(json.dumps(data, ensure_ascii=False))
+        print(str(out_path))
+        return 0
+
     print(f"unknown workouts command: {cmd}", file=sys.stderr)
     return 1
