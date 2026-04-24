@@ -49,6 +49,26 @@ All commands support `-p` / `--pretty` at the top level for human-readable
 table output. Default output is JSON. All commands exit `0` on success,
 `1` on usage error, `2` on auth error, `3` on API error.
 
+The CLI's own help is self-sufficient. Use `garmin --help`, `garmin
+<group> --help`, and `garmin <group> <cmd> --help` to discover
+arguments. The reference below covers only the non-obvious workflow
+details (workout JSON schema, zones semantics, strength taxonomy).
+Command groups available:
+
+- `activities` — list, inspect, rename, retype, upload/download, delete, gear
+- `workouts` — list/get/create/delete/download structured workouts
+- `calendar` — schedule/unschedule workouts
+- `zones` — HR zone configuration per sport (see below for semantics)
+- `health` — daily metrics (sleep, HRV, stress, RHR, body battery, SpO2,
+  weight, readiness, …)
+- `stats` — progress, weekly rollups, training status, race predictions,
+  running tolerance, records, badges, challenges
+- `gear` — gear library, stats, defaults
+- `devices` — registered devices, settings, alarms, solar
+- `goals` — goals
+- `plans` — training plans (incl. adaptive)
+- `user` — profile, settings, name, unit system
+
 ### Auth
 
 ```bash
