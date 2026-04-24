@@ -76,6 +76,35 @@ def build_parser() -> argparse.ArgumentParser:
     act_retype.add_argument("--type-key", default="running")
     act_retype.add_argument("--parent-type-id", type=int, default=17)
 
+    # -- zones (HR zone config) --
+    zn = sub.add_parser("zones", help="read and write HR zone configuration")
+    zn_sub = zn.add_subparsers(dest="command")
+
+    zn_sub.add_parser("list", help="show current HR zones per sport")
+
+    zn_set = zn_sub.add_parser(
+        "set",
+        help="set max HR, resting HR, and zone floors (applies to DEFAULT + RUNNING by default)",
+    )
+    zn_set.add_argument("--max-hr", type=int, required=True, dest="max_hr")
+    zn_set.add_argument("--rhr", type=int, required=True)
+    zn_set.add_argument(
+        "--method",
+        default="HR_RESERVE",
+        choices=["HR_RESERVE", "PERCENT_MAX_HR"],
+        help="zone calculation method (default: HR_RESERVE / Karvonen)",
+    )
+    zn_set.add_argument(
+        "--sport",
+        default="DEFAULT,RUNNING",
+        help="comma-separated sports to update (default: DEFAULT,RUNNING)",
+    )
+    zn_set.add_argument(
+        "--zones",
+        default=None,
+        help="override zone floors as Z1,Z2,Z3,Z4,Z5 (default: auto-compute at 50/60/70/80/90%%)",
+    )
+
     return parser
 
 
@@ -111,6 +140,8 @@ def main(argv: list[str] | None = None) -> int:
         from garmin_connect_cli.commands.calendar import run
     elif args.group == "activities":
         from garmin_connect_cli.commands.activities import run
+    elif args.group == "zones":
+        from garmin_connect_cli.commands.zones import run
     else:
         parser.print_help()
         return 1

@@ -139,6 +139,30 @@ garmin activities rename <id> "New name"
 garmin activities retype <id> --type-key running
 ```
 
+### `zones`
+
+Read and write HR zone configuration. Garmin stores a `DEFAULT` set plus
+optional per-sport sets (e.g. `RUNNING`). Structured workouts that target
+`heart.rate.zone` resolve against the sport-specific set if it exists,
+falling back to `DEFAULT` otherwise — so both typically need to match.
+
+```bash
+garmin zones list                                 # show current zones per sport
+garmin -p zones list                              # pretty table
+garmin zones set --max-hr 190 --rhr 47            # update DEFAULT + RUNNING (Karvonen)
+garmin zones set --max-hr 190 --rhr 47 --sport RUNNING
+garmin zones set --max-hr 190 --rhr 47 --method PERCENT_MAX_HR
+garmin zones set --max-hr 190 --rhr 47 --zones 118,133,147,161,176
+```
+
+`set` auto-computes zone floors at the standard 50/60/70/80/90 %HRR
+(`HR_RESERVE`) or %Max (`PERCENT_MAX_HR`). Use `--zones` to override with
+explicit floors.
+
+Updates apply immediately to newly-recorded activities and to structured
+workouts resolved from the server. Past activities keep the zone
+distribution frozen at the config that was active when they were recorded.
+
 ## Workout JSON format
 
 Workouts are uploaded as JSON matching Garmin's native structure. Two
