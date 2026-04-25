@@ -20,11 +20,41 @@ def _output(data: object, pretty: bool) -> None:
         print(json.dumps(data, ensure_ascii=False))
 
 
+_PAGE_SIZE = 100  # Garmin's per-request max for the workouts endpoint.
+
+
+def _list_all_workouts(api, limit: int | None = None) -> list[dict]:
+    """Page through `get_workouts(start, limit)` until exhausted (or `limit`
+    results collected). The underlying endpoint caps each call at 100."""
+    out: list[dict] = []
+    start = 0
+    while True:
+        page_size = _PAGE_SIZE
+        if limit is not None:
+            remaining = limit - len(out)
+            if remaining <= 0:
+                break
+            page_size = min(page_size, remaining)
+        page = api.get_workouts(start=start, limit=page_size)
+        if not page:
+            break
+        # Defensive truncate: if the API returned more than asked
+        # (shouldn't happen, but don't trust it for `--limit` correctness).
+        if len(page) > page_size:
+            page = page[:page_size]
+        out.extend(page)
+        if len(page) < page_size:
+            break
+        start += len(page)
+    return out
+
+
 def run(api, args) -> int:
     cmd = args.command
 
     if cmd == "list":
-        workouts = api.get_workouts()
+        limit = getattr(args, "limit", None)
+        workouts = _list_all_workouts(api, limit=limit)
         _output(workouts, args.pretty)
         return 0
 
@@ -43,6 +73,27 @@ def run(api, args) -> int:
             result = api.upload_workout(payload)
             results.append(result)
         _output(results, args.pretty)
+        return 0
+
+    if cmd == "update":
+        if args.file == "-":
+            payload = json.load(sys.stdin)
+        else:
+            payload = json.loads(Path(args.file).read_text())
+        url = f"/workout-service/workout/{args.id}"
+        resp = api.client.request("PUT", "connectapi", url, json=payload)
+        status = getattr(resp, "status_code", None)
+        if status is not None and status >= 300:
+            body = getattr(resp, "text", "")
+            print(f"ERROR: PUT returned {status}: {body}", file=sys.stderr)
+            return 3
+        # Garmin's PUT response varies — fall back to a fetch for the
+        # canonical post-update state.
+        try:
+            updated = api.get_workout_by_id(args.id)
+        except Exception:
+            updated = {"updated": args.id}
+        _output(updated, args.pretty)
         return 0
 
     if cmd == "delete":

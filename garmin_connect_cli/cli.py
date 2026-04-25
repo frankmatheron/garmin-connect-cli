@@ -57,7 +57,21 @@ def _build_workouts(sub: argparse._SubParsersAction) -> None:
     )
     wo_sub = wo.add_subparsers(dest="command", metavar="<command>")
 
-    wo_sub.add_parser("list", help="list all saved workouts")
+    p = wo_sub.add_parser(
+        "list",
+        help="list all saved workouts",
+        description=(
+            "Lists every workout in the library by paging through the API "
+            "(which caps each request at 100). Use --limit to cap the "
+            "total returned."
+        ),
+    )
+    p.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="cap total results returned (default: all)",
+    )
 
     p = wo_sub.add_parser("get", help="fetch one workout by id")
     p.add_argument("id", type=int)
@@ -73,6 +87,20 @@ def _build_workouts(sub: argparse._SubParsersAction) -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("files", nargs="+", help="path(s) to workout JSON, or `-` for stdin")
+
+    p = wo_sub.add_parser(
+        "update",
+        help="update an existing workout by id with a JSON payload",
+        description=(
+            "Replace an existing workout with the contents of a JSON file. "
+            "The payload should be the full workout DTO (the same shape that "
+            "`get` returns and `create` accepts). Use `-` to read from stdin."
+        ),
+        epilog="Example:\n  garmin workouts get 12345 > w.json && $EDITOR w.json\n  garmin workouts update 12345 w.json",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument("id", type=int)
+    p.add_argument("file", help="path to workout JSON, or `-` for stdin")
 
     p = wo_sub.add_parser("delete", help="delete a workout by id")
     p.add_argument("id", type=int)
